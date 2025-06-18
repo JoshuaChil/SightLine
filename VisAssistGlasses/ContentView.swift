@@ -39,7 +39,7 @@ struct ContentView: View {
                 TabBarButton(icon: "gear", tab: .settings, selectedTab: $selectedTab)
             }
             .padding(.top, 40)
-            .padding(.bottom, 15)
+            .padding(.bottom, 20)
             .padding(.horizontal, 20)
             .background(
                 GeometryReader { geometry in
@@ -62,6 +62,7 @@ struct ContentView: View {
                     )
                     .frame(height: geometry.size.height + tiltFactor)
                 }
+                    .opacity(0.95)
             )
         }
         .ignoresSafeArea(edges: .bottom)
