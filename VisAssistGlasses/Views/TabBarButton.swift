@@ -28,9 +28,7 @@ struct TabBarButton: View {
 
     var body: some View {
         Button(action: {
-            withAnimation(.spring()) {
-                selectedTab = tab
-            }
+            selectedTab = tab
         }) {
             ZStack {
                 // Gradient parallelogram background

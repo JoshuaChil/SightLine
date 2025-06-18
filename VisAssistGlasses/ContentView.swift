@@ -19,10 +19,16 @@ struct ContentView: View {
         VStack(spacing: 0) {
             Group {
                 switch selectedTab {
-                case .dashboard:
-                    DashboardView()
-                default:
-                    DashboardView()
+                    case .dashboard:
+                        DashboardView()
+                    case .navigate:
+                        NavigateView()
+                    case .logs:
+                        LogsView()
+                    case .help:
+                        HelpView()
+                    case .settings:
+                        SettingsView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -62,7 +68,7 @@ struct ContentView: View {
                     )
                     .frame(height: geometry.size.height + tiltFactor)
                 }
-                    .opacity(0.95)
+                .opacity(0.95)
             )
         }
         .ignoresSafeArea(edges: .bottom)
