@@ -1,0 +1,10 @@
+{
+  "name": "Python Dev Container",
+  "dockerFile": "../Dockerfile",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
+  }
+}
