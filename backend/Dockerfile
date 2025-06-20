@@ -7,9 +7,13 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt 
 
+# Install production server
+RUN pip install gunicorn
+
 COPY . .
 
 # Flask port
 EXPOSE 5000 
 
-CMD ["flask", "run", "--host", "0.0.0.0", "--port", "5000"]
+# -w {num} is for worker threads, increase to handle more capacity (most likely won't need to)
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "app:app"]
