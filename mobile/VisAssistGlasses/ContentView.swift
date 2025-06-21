@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .dashboard
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
             Group {
                 switch selectedTab {
                     case .dashboard:
@@ -33,64 +33,49 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            HStack {
-                TabBarButton(icon: "house.fill", tab: .dashboard, selectedTab: $selectedTab)
+            VStack {
                 Spacer()
-                TabBarButton(icon: "map.fill", tab: .navigate, selectedTab: $selectedTab)
-                Spacer()
-                TabBarButton(icon: "newspaper.fill", tab: .logs, selectedTab: $selectedTab)
-                Spacer()
-                TabBarButton(icon: "hand.raised.fill", tab: .help, selectedTab: $selectedTab)
-                Spacer()
-                TabBarButton(icon: "gear", tab: .settings, selectedTab: $selectedTab)
-            }
-            .padding(.top, 40)
-            .padding(.bottom, 20)
-            .padding(.horizontal, 20)
-            .background(
-                GeometryReader { geometry in
-                    let width = geometry.size.width
-                    let height = geometry.size.height
-                    
-                    let top = CGFloat(30)
-
-                    Path { path in
-                        path.move(to: CGPoint(x: width, y: height + tiltFactor + top))
-                        path.addLine(to: CGPoint(x: 0, y: height + tiltFactor + top))
-                        path.addLine(to: CGPoint(x: 0, y: tiltFactor + top))
-                        path.addLine(to: CGPoint(x: width, y: top))
-                        path.closeSubpath()
-                    }
-                    .fill(
-                        LinearGradient(colors: [Color(hex: "#363E51"), Color(hex: "#181C24")],
-                                       startPoint: .top,
-                                       endPoint: .bottom)
-                    )
-                    .frame(height: geometry.size.height + tiltFactor)
+                
+                HStack {
+                    TabBarButton(icon: "house.fill", tab: .dashboard, selectedTab: $selectedTab)
+                    Spacer()
+                    TabBarButton(icon: "map.fill", tab: .navigate, selectedTab: $selectedTab)
+                    Spacer()
+                    TabBarButton(icon: "newspaper.fill", tab: .logs, selectedTab: $selectedTab)
+                    Spacer()
+                    TabBarButton(icon: "hand.raised.fill", tab: .help, selectedTab: $selectedTab)
+                    Spacer()
+                    TabBarButton(icon: "gear", tab: .settings, selectedTab: $selectedTab)
                 }
-                .opacity(0.95)
-            )
+                .padding(.top, 40)
+                .padding(.bottom, 20)
+                .padding(.horizontal, 20)
+                .background(
+                    GeometryReader { geometry in
+                        let width = geometry.size.width
+                        let height = geometry.size.height
+                        
+                        let top = CGFloat(30)
+                        
+                        Path { path in
+                            path.move(to: CGPoint(x: width, y: height + tiltFactor + top))
+                            path.addLine(to: CGPoint(x: 0, y: height + tiltFactor + top))
+                            path.addLine(to: CGPoint(x: 0, y: tiltFactor + top))
+                            path.addLine(to: CGPoint(x: width, y: top))
+                            path.closeSubpath()
+                        }
+                        .fill(
+                            LinearGradient(colors: [Color(hex: "#363E51"), Color(hex: "#181C24")],
+                                           startPoint: .top,
+                                           endPoint: .bottom)
+                        )
+                        .frame(height: geometry.size.height + tiltFactor)
+                    }
+                        .opacity(0.95)
+                )
+            }
         }
         .ignoresSafeArea(edges: .bottom)
-        .background(ZStack {
-            Color.init(hex: "#242C3B")
-                .ignoresSafeArea()
-
-            GeometryReader { geometry in
-                Path { path in
-                    let width = geometry.size.width
-                    let height = geometry.size.height
-
-                    path.move(to: CGPoint(x: width, y: height))
-                    path.addLine(to: CGPoint(x: width, y: height - 650))
-                    path.addLine(to: CGPoint(x: width - 135, y: height - 700))
-                    path.addLine(to: CGPoint(x: width - 400, y: height))
-                    path.closeSubpath()
-                }
-                .fill(LinearGradient(colors: [Color.init(hex: "#37B6E9"), Color.init(hex: "#4B4CED")], startPoint: .top, endPoint: .bottom))
-            }
-            .ignoresSafeArea()
-        })
     }
 }
 
