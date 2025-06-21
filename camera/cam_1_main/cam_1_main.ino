@@ -1,106 +1,35 @@
-#include <WiFi.h>
 #include "esp_camera.h"
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+#include <WiFi.h>
 
-#define CAMERA_MODEL_XIAO_ESP32S3
+//
+// WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
+//            Ensure ESP32 Wrover Module or other board with PSRAM is selected
+//            Partial images will be transmitted if image exceeds buffer size
+//
+//            You must select partition scheme from the board menu that has at least 3MB APP space.
+//            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15
+//            seconds to process single frame. Face Detection is ENABLED if PSRAM is enabled as well
+
+// ===================
+// Select camera model
+// ===================
+#define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
 
-// Wi-Fi credentials
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
+// ===========================
+// Enter your WiFi credentials
+// ===========================
+const char *ssid = "The Bedsons";
+const char *password = "LuckyMe2005";
 
-// Web server
-WiFiServer server(80);
-
-// Global status
-unsigned long lastCaptureTime = 0;
-int imageCount = 1;
-bool camera_sign = false;
-bool sd_sign = false;
-
-// Save pictures to SD card
-void photo_save(const char *fileName) {
-  camera_fb_t *fb = esp_camera_fb_get();
-  if (!fb) {
-    Serial.println("Failed to get camera frame buffer");
-    return;
-  }
-  writeFile(SD, fileName, fb->buf, fb->len);
-  esp_camera_fb_return(fb);
-  Serial.println("Photo saved to file");
-}
-
-void writeFile(fs::FS &fs, const char *path, uint8_t *data, size_t len) {
-  Serial.printf("Writing file: %s\n", path);
-  File file = fs.open(path, FILE_WRITE);
-  if (!file) {
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-  if (file.write(data, len) == len) {
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
-  }
-  file.close();
-}
-
-// Task to run camera + SD
-void TaskCamera(void *pvParameters) {
-  while (true) {
-    if (camera_sign && sd_sign) {
-      unsigned long now = millis();
-      if ((now - lastCaptureTime) >= 60000) {
-        char filename[32];
-        sprintf(filename, "/image%d.jpg", imageCount);
-        photo_save(filename);
-        Serial.printf("Saved picture：%s\n", filename);
-        Serial.println("Photos will begin in one minute, please be ready.");
-        imageCount++;
-        lastCaptureTime = now;
-      }
-    }
-    vTaskDelay(1000 / portTICK_PERIOD_MS); // Check once per second
-  }
-}
-
-// Task to run simple web server
-void TaskWebServer(void *pvParameters) {
-  server.begin();
-  while (true) {
-    WiFiClient client = server.available();
-    if (client) {
-      Serial.println("Client connected");
-      while (client.connected()) {
-        if (client.available()) {
-          String request = client.readStringUntil('\r');
-          Serial.print("Request: ");
-          Serial.println(request);
-          client.flush();
-
-          // Send a basic response
-          client.println("HTTP/1.1 200 OK");
-          client.println("Content-Type: text/html");
-          client.println();
-          client.println("<h1>Hello from XIAO ESP32S3!</h1>");
-          break;
-        }
-      }
-      delay(1);
-      client.stop();
-      Serial.println("Client disconnected");
-    }
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-  }
-}
+void startCameraServer();
+void setupLedFlash(int pin);
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
+  Serial.setDebugOutput(true);
+  Serial.println();
 
-  // Camera config
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -116,69 +45,95 @@ void setup() {
   config.pin_pclk = PCLK_GPIO_NUM;
   config.pin_vsync = VSYNC_GPIO_NUM;
   config.pin_href = HREF_GPIO_NUM;
-  config.pin_sscb_sda = SIOD_GPIO_NUM;
-  config.pin_sscb_scl = SIOC_GPIO_NUM;
+  config.pin_sccb_sda = SIOD_GPIO_NUM;
+  config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
   config.frame_size = FRAMESIZE_UXGA;
-  config.pixel_format = PIXFORMAT_JPEG;
+  config.pixel_format = PIXFORMAT_JPEG;  // for streaming
+  //config.pixel_format = PIXFORMAT_RGB565; // for face detection/recognition
+  config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
   config.fb_count = 1;
 
+  // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
+  //                      for larger pre-allocated frame buffer.
   if (config.pixel_format == PIXFORMAT_JPEG) {
     if (psramFound()) {
       config.jpeg_quality = 10;
       config.fb_count = 2;
       config.grab_mode = CAMERA_GRAB_LATEST;
     } else {
+      // Limit the frame size when PSRAM is not available
       config.frame_size = FRAMESIZE_SVGA;
       config.fb_location = CAMERA_FB_IN_DRAM;
     }
   } else {
+    // Best option for face detection/recognition
     config.frame_size = FRAMESIZE_240X240;
 #if CONFIG_IDF_TARGET_ESP32S3
     config.fb_count = 2;
 #endif
   }
 
-  if (esp_camera_init(&config) == ESP_OK) {
-    camera_sign = true;
-  } else {
-    Serial.println("Camera init failed");
+#if defined(CAMERA_MODEL_ESP_EYE)
+  pinMode(13, INPUT_PULLUP);
+  pinMode(14, INPUT_PULLUP);
+#endif
+
+  // camera init
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Camera init failed with error 0x%x", err);
+    return;
   }
 
-  if (SD.begin(21)) {
-    uint8_t cardType = SD.cardType();
-    if (cardType != CARD_NONE) {
-      sd_sign = true;
-      Serial.println("SD card initialized");
-    } else {
-      Serial.println("No SD card attached");
-    }
-  } else {
-    Serial.println("SD card mount failed");
+  sensor_t *s = esp_camera_sensor_get();
+  // initial sensors are flipped vertically and colors are a bit saturated
+  if (s->id.PID == OV3660_PID) {
+    s->set_vflip(s, 1);        // flip it back
+    s->set_brightness(s, 1);   // up the brightness just a bit
+    s->set_saturation(s, -2);  // lower the saturation
+  }
+  // drop down frame size for higher initial frame rate
+  if (config.pixel_format == PIXFORMAT_JPEG) {
+    s->set_framesize(s, FRAMESIZE_QVGA);
   }
 
-  // Connect to Wi-Fi
+#if defined(CAMERA_MODEL_M5STACK_WIDE) || defined(CAMERA_MODEL_M5STACK_ESP32CAM)
+  s->set_vflip(s, 1);
+  s->set_hmirror(s, 1);
+#endif
+
+#if defined(CAMERA_MODEL_ESP32S3_EYE)
+  s->set_vflip(s, 1);
+#endif
+
+// Setup LED FLash if LED pin is defined in camera_pins.h
+#if defined(LED_GPIO_NUM)
+  setupLedFlash(LED_GPIO_NUM);
+#endif
+
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
+  WiFi.setSleep(false);
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println();
-  Serial.print("Connected. IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.println("");
+  Serial.println("WiFi connected");
 
-  Serial.println("Photos will begin in one minute, please be ready.");
+  startCameraServer();
 
-  // Create FreeRTOS tasks - multithreading
-  xTaskCreatePinnedToCore(TaskCamera, "Camera", 4096, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(TaskWebServer, "WebServer", 4096, NULL, 1, NULL, 0);
+  Serial.print("Camera Ready! Use 'http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("' to connect");
 }
 
 void loop() {
-  // Nothing to do here
+  // Do nothing. Everything is done in another task by the web server
+  delay(10000);
 }
