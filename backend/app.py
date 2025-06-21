@@ -15,10 +15,14 @@ def handle_question():
         
         question = data['question']
         
+        # Print the question to console
+        print(f"Received question: {question}")
+        
         # Wait 3 seconds
         time.sleep(3)
         
         # Return the question in the response field
+        print("reply sending")
         return jsonify({'response': question})
         
     except Exception as e:
