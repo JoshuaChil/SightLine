@@ -20,7 +20,7 @@ def generate_llm_prompt(boxes, classes, depth, class_names):
     if detected_objects_info:
         prompt = "Based on the visual analysis of the environment, the following objects are present:\n"
         prompt += "\n".join(detected_objects_info)
-        prompt += "\nThese are all the objects in front of a blind person, and their approximate distances from them. The persons eyes are located at the center of the image. In only 1 sentence, answer the question the user has to help them navigate their environment since they cannot see. Never state co-ordinates, but use them to help guide the user regarding relative object location."
+        prompt += "\nThese are all the objects in front of a blind person, and their approximate distances from them. The persons eyes are located at the center of the image. In only 1 sentence, answer the question the user has to help them navigate their environment since they cannot see. Never state co-ordinates, but use them to help guide the user regarding relative object location. The user's eyes are located at coordinate  "
         prompt += "\n\nQuestion: "
     else:
         prompt = "No distinct objects were detected in the environment, indicating a potentially clear or unpopulated scene."
