@@ -1,10 +1,40 @@
 from flask import Flask, request, jsonify, Response
 import time
+import threading
+import time
+import cv2
+import torch
+from ultralytics import YOLO
+from generate_prompt import generate_llm_prompt
+from groq import Groq
+import depth_pro
+import os
 
 app = Flask(__name__)
 
 # Global variable to store the latest frame
 latest_frame = None
+
+device = torch.device("cuda")
+model, transform = depth_pro.create_model_and_transforms(device=device, precision=torch.float16)
+obj_model = YOLO("yolov8n.pt")
+client = Groq(api_key="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")
+
+class_names1 = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 
+               'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 
+               'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 
+               'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 
+               'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 
+               'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 
+               'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+
+class_names2 = ['bed', 'chair', 'door', 'door-frame', 'shower', 'sink', 'sofa', 'stairs', 'table', 'toilet']
+
+
+cap = cv2.VideoCapture(0)
+latest_boxes, latest_classes, latest_depth = None, None, None
+IMAGE_PATH = "data/camera.jpg"
 
 @app.route('/frame', methods=['POST'])
 def handle_frame():
