@@ -10,10 +10,10 @@ import os
 
 device = torch.device("cuda")
 model, transform = depth_pro.create_model_and_transforms(device=device, precision=torch.float16)
-obj_model = YOLO("yolov8n.pt")
-client = Groq(api_key="")
+obj_model = YOLO("./runs/detect/train10/weights/best.pt")
+client = Groq(api_key="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")
 
-class_names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
+class_names1 = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
                'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 
                'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 
                'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 
@@ -21,6 +21,9 @@ class_names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'tra
                'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 
                'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 
                'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+
+class_names2 = ['bed', 'chair', 'door', 'door-frame', 'shower', 'sink', 'sofa', 'stairs', 'table', 'toilet']
+
 
 cap = cv2.VideoCapture(0)
 latest_boxes, latest_classes, latest_depth = None, None, None
@@ -48,7 +51,7 @@ def frame_loop():
         latest_boxes = results[0].boxes
         latest_classes = results[0].boxes.cls.cpu().numpy()
 
-        time.sleep(10)
+        time.sleep(1)
 
 def input_loop():
     while True:
@@ -60,7 +63,7 @@ def input_loop():
             print("No frame data yet.")
             continue
 
-        llm_prompt = generate_llm_prompt(latest_boxes, latest_classes, latest_depth, class_names)
+        llm_prompt = generate_llm_prompt(latest_boxes, latest_classes, latest_depth, class_names2)
         completion = client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[{"role": "user", "content": "Context: " + llm_prompt + "\n\nQuestion: " + question}],

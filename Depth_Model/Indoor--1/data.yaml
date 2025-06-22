@@ -1,0 +1,21 @@
+names:
+- bed
+- chair
+- door
+- door-frame
+- shower
+- sink
+- sofa
+- stairs
+- table
+- toilet
+nc: 10
+roboflow:
+  license: CC BY 4.0
+  project: indoor-5iwhq-jyaax
+  url: https://universe.roboflow.com/sightline/indoor-5iwhq-jyaax/dataset/1
+  version: 1
+  workspace: sightline
+test: ../test/images
+train: ../train/images
+val: ../valid/images
