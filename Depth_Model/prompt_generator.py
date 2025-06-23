@@ -10,7 +10,7 @@ import os
 
 device = torch.device("cuda")
 model, transform = depth_pro.create_model_and_transforms(device=device, precision=torch.float16)
-obj_model = YOLO("./runs/detect/train10/weights/best.pt")
+obj_model = YOLO("yolov8n.pt")
 client = Groq(api_key="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")
 
 class_names1 = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
@@ -46,6 +46,7 @@ def frame_loop():
 
         prediction = model.infer(image, f_px=f_px)
         latest_depth = prediction["depth"]
+        print(latest_depth.shape())
 
         results = obj_model(IMAGE_PATH)
         latest_boxes = results[0].boxes
