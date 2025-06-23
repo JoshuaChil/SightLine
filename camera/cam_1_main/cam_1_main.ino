@@ -8,7 +8,7 @@ const char *ssid = "The Bedsons";
 const char *password = "LuckyMe2005";
 
 // Server URL
-const char *serverUrl = "http://192.168.6.217:8080/frame";
+const char *serverUrl = "http://192.168.7.49:8080/frame";
 
 void sendFrame() {
   camera_fb_t *fb = esp_camera_fb_get();
@@ -20,13 +20,14 @@ void sendFrame() {
   HTTPClient http;
   http.begin(serverUrl);
   http.addHeader("Content-Type", "image/jpeg");
+  http.setTimeout(5000);
 
   int httpResponseCode = http.POST(fb->buf, fb->len);
 
   if (httpResponseCode > 0) {
     Serial.printf("POST Success. Code: %d\n", httpResponseCode);
   } else {
-    Serial.printf("POST Failed. Error: %s\n", http.errorToString(httpResponseCode).c_str());
+    Serial.printf("POST Failed. Error(WiFi Status: %d): %s\n", WiFi.status(), http.errorToString(httpResponseCode).c_str());
   }
 
   http.end();
@@ -74,7 +75,7 @@ void setup() {
   config.frame_size = FRAMESIZE_UXGA;
   config.pixel_format = PIXFORMAT_JPEG;
   config.fb_location = CAMERA_FB_IN_PSRAM;
-  config.jpeg_quality = 5;
+  config.jpeg_quality = 10;
   config.fb_count = 1;
   config.grab_mode = CAMERA_GRAB_LATEST;
 
@@ -91,6 +92,7 @@ void setup() {
     s->set_saturation(s, -2);
   }
 
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
 
@@ -106,5 +108,8 @@ void setup() {
 }
 
 void loop() {
+  Serial.print("RSSI: ");
+  Serial.println(WiFi.RSSI());
   sendFrame();
+  delay(1000);
 }
