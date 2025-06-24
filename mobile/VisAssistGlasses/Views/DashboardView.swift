@@ -9,6 +9,15 @@ import SwiftUI
 import Speech
 import AVFoundation
 
+// Audio Player Delegate for handling completion
+class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
+    var onAudioFinished: (() -> Void)?
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        onAudioFinished?()
+    }
+}
+
 struct DashboardView: View {
     let batteryPercentage = 65
     let paired = false
@@ -24,8 +33,16 @@ struct DashboardView: View {
                 try audioSession.setCategory(.playback, mode: .default, options: [])
                 try audioSession.setActive(true)
                 
-                // Create and play audio player
+                // Set up delegate to restart background listening when audio finishes
+                audioPlayerDelegate.onAudioFinished = {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        self.startBackgroundListening()
+                    }
+                }
+                
+                // Create and play audio player with delegate
                 audioPlayer = try AVAudioPlayer(data: audioData)
+                audioPlayer?.delegate = audioPlayerDelegate
                 audioPlayer?.prepareToPlay()
                 audioPlayer?.play()
                 
@@ -33,6 +50,11 @@ struct DashboardView: View {
                 print("ElevenLabs TTS Error: \(error)")
                 // Fallback to native speech synthesis
                 fallbackToNativeSpeech(text)
+                
+                // Restart background listening after fallback speech
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self.startBackgroundListening()
+                }
             }
         }
     }
@@ -53,6 +75,19 @@ struct DashboardView: View {
     @State private var silenceTimer: Timer?
     @State private var lastSpeechTime = Date()
     @State private var audioPlayer: AVAudioPlayer?
+    
+    // Add these new state variables with your existing @State variables
+    @State private var isBackgroundListening = false
+    @State private var backgroundRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    @State private var backgroundRecognitionTask: SFSpeechRecognitionTask?
+    @State private var wakeWords = ["hey sight line", "hey site line", "hey sideline"]
+    @State private var listeningMode: ListeningMode = .background
+    @State private var audioPlayerDelegate = AudioPlayerDelegate()
+    
+    enum ListeningMode {
+        case background  // Listening for wake words
+        case active      // Listening for questions
+    }
     
     private let elevenLabsService = ElevenLabsService.shared
     
@@ -160,6 +195,12 @@ struct DashboardView: View {
                 speakResponse(newResponse)
             }
         }
+        .onAppear {
+            startBackgroundListening()
+        }
+        .onDisappear {
+            stopBackgroundListening()
+        }
     }
     
     private func requestSpeechPermission() {
@@ -178,6 +219,9 @@ struct DashboardView: View {
     }
     
     private func startListening() {
+        // Stop background listening first to avoid conflicts
+        stopBackgroundListening()
+        
         guard !audioEngine.isRunning else { return }
         
         // Cancel previous task
@@ -196,6 +240,7 @@ struct DashboardView: View {
         recognitionRequest.shouldReportPartialResults = true
         
         isListening = true
+        listeningMode = .active
         lastSpeechTime = Date()
         
         // Create recognition task
@@ -248,6 +293,10 @@ struct DashboardView: View {
         recognitionTask = nil
         
         isListening = false
+        listeningMode = .background
+        
+        // Don't restart background listening here - let speakResponse handle it
+        // This prevents interrupting the ElevenLabs response
     }
     
     private func processSpokenQuestion(_ question: String) {
@@ -454,4 +503,128 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
+}
+
+// MARK: - Background Listening for Wake Words
+extension DashboardView {
+    private func startBackgroundListening() {
+        guard !audioEngine.isRunning else { return }
+        
+        SFSpeechRecognizer.requestAuthorization { status in
+            DispatchQueue.main.async {
+                guard status == .authorized else {
+                    print("Speech recognition not authorized for background listening")
+                    return
+                }
+                
+                self.setupBackgroundListening()
+            }
+        }
+    }
+    
+    private func setupBackgroundListening() {
+        // Make sure we're not in active listening mode
+        guard listeningMode == .background else { return }
+        
+        // Cancel previous background task
+        backgroundRecognitionTask?.cancel()
+        backgroundRecognitionTask = nil
+        
+        // Stop any active listening first
+        if audioEngine.isRunning {
+            audioEngine.stop()
+            audioEngine.inputNode.removeTap(onBus: 0)
+            recognitionTask?.cancel()
+            recognitionTask = nil
+        }
+        
+        // Configure audio session for background recording
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("Failed to configure audio session for background listening: \(error)")
+            return
+        }
+        
+        // Create background recognition request
+        backgroundRecognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        guard let backgroundRecognitionRequest = backgroundRecognitionRequest else { return }
+        backgroundRecognitionRequest.shouldReportPartialResults = true
+        
+        isBackgroundListening = true
+        
+        // Create background recognition task using the same speech recognizer
+        backgroundRecognitionTask = speechRecognizer?.recognitionTask(with: backgroundRecognitionRequest) { result, error in
+            DispatchQueue.main.async {
+                // Only process if we're still in background mode
+                guard self.listeningMode == .background else { return }
+                
+                if let result = result {
+                    let spokenText = result.bestTranscription.formattedString.lowercased()
+                    print(spokenText)
+                    
+                    // Check if any wake word was detected
+                    for wakeWord in self.wakeWords {
+                        if spokenText.contains(wakeWord.lowercased()) {
+                            print("Wake word detected: \(wakeWord)")
+                            self.handleWakeWordDetected()
+                            break
+                        }
+                    }
+                }
+                
+                if error != nil {
+                    print("Background recognition error: \(error?.localizedDescription ?? "Unknown error")")
+                    // Restart background listening after a short delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        if self.listeningMode == .background {
+                            self.startBackgroundListening()
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Configure audio input for background listening using the main audio engine
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+            backgroundRecognitionRequest.append(buffer)
+        }
+        
+        audioEngine.prepare()
+        do {
+            try audioEngine.start()
+            print("Background listening started")
+        } catch {
+            print("Failed to start background audio engine: \(error)")
+        }
+    }
+    
+    private func stopBackgroundListening() {
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        
+        backgroundRecognitionRequest?.endAudio()
+        backgroundRecognitionRequest = nil
+        
+        backgroundRecognitionTask?.cancel()
+        backgroundRecognitionTask = nil
+        
+        isBackgroundListening = false
+        print("Background listening stopped")
+    }
+    
+    private func handleWakeWordDetected() {
+        // Stop background listening temporarily
+        stopBackgroundListening()
+        
+        // Provide haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+        
+        self.startListening()
+    }
 }
