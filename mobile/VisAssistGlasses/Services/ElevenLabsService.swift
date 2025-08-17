@@ -25,7 +25,7 @@ class ElevenLabsService {
     static let shared = ElevenLabsService()
     
     // Replace with your ElevenLabs API key
-    private let apiKey = "sk_5c56dfc3be88f17f5045aceb686220f10217d506e4dbf68b"
+    private let apiKey = "sk_e6b51addf4ec292346baa5c2f668e1647511f92109153bc9"//"sk_5c56dfc3be88f17f5045aceb686220f10217d506e4dbf68b"
     
     // Popular voice ID (Rachel - English, US)
     private let voiceId = "21m00Tcm4TlvDq8ikWAM"

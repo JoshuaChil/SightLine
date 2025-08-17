@@ -4,11 +4,11 @@
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
 
-const char *ssid = "The Bedsons";
-const char *password = "LuckyMe2005";
+const char *ssid = "NCSSM-IoT";
+const char *password = "superhet26preharsh"; // ireland67ananym
 
 // Server URL
-const char *serverUrl = "http://192.168.7.49:8080/frame";
+const char *serverUrl = "http://192.168.168.131:8080/frame";
 
 void sendFrame() {
   camera_fb_t *fb = esp_camera_fb_get();

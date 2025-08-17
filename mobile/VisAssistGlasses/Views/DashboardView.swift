@@ -20,7 +20,7 @@ class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
 
 struct DashboardView: View {
     let batteryPercentage = 65
-    let paired = false
+    let paired = true
     private func speakResponse(_ text: String) {
         print("Speaking with ElevenLabs: \(text)")
         
@@ -80,7 +80,7 @@ struct DashboardView: View {
     @State private var isBackgroundListening = false
     @State private var backgroundRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     @State private var backgroundRecognitionTask: SFSpeechRecognitionTask?
-    @State private var wakeWords = ["hey sight line", "hey site line", "hey sideline"]
+    @State private var wakeWords = ["hey sight line", "hey site line", "hey sideline", "hay sight line", "hay site line", "hay sideline", "give me the power", "sight line", "site line", "sideline"]
     @State private var listeningMode: ListeningMode = .background
     @State private var audioPlayerDelegate = AudioPlayerDelegate()
     
@@ -459,43 +459,6 @@ struct DashboardView: View {
                     
                 }
                 .frame(height: 200)
-                
-                ZStack {
-                    RoundedParallelogramFlatBottom(cornerRadius: 20, slantOffset: 8)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.init(hex: "#FFFFFF"),
-                                    Color.init(hex: "#000000")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing)
-                            .opacity(0.95)
-                        )
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.init(hex: "#222834"),
-                                    Color.init(hex: "#353F54")],
-                                startPoint: .leading,
-                                endPoint: .trailing)
-                            .opacity(0.95)
-                        )
-                    
-                    VStack {
-                        Image(paired ? "paired" : "unpaired")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100)
-                        
-                        Text(paired ? "Connected" : "Disconnected")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                            .padding(.vertical, 10)
-                    }
-                }
-                .frame(height: 200)
-                .offset(y: -20)
             }
         }
     }
@@ -622,8 +585,8 @@ extension DashboardView {
         stopBackgroundListening()
         
         // Provide haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
         
         self.startListening()
     }

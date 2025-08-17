@@ -17,7 +17,7 @@ struct QuestionResponse: Codable {
 
 class APIService {
     static let shared = APIService()
-    private let baseURL = "http://192.168.7.49:8080"
+    private let baseURL = "http://192.168.168.131:8080"
     
     private init() {}
     
