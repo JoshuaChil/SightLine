@@ -1,0 +1,22 @@
+{
+  "model": {
+    "model_name": "best",
+  "model": "best_openvino_model/best.xml",
+  "weights": "best_openvino_model/best.bin"
+  },
+  "engine": {
+    "type": "simplified",
+    "data_source": "calib_data/"
+  },
+  "compression": {
+    "algorithms": [
+      {
+        "name": "DefaultQuantization",
+        "params": {
+          "preset": "performance",
+          "stat_subset_size": 63
+        }
+      }
+    ]
+  }
+}
