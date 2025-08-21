@@ -8,7 +8,7 @@ const char *ssid = "NCSSM-IoT";
 const char *password = "superhet26preharsh"; // ireland67ananym
 
 // Server URL
-const char *serverUrl = "http://192.168.168.131:8080/frame";
+const char *serverUrl = "http://192.168.221.60:8081/frame";
 
 void sendFrame() {
   camera_fb_t *fb = esp_camera_fb_get();
