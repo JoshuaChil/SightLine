@@ -1,20 +1,21 @@
 {
   "model": {
-    "model_name": "best",
-  "model": "best_openvino_model/best.xml",
-  "weights": "best_openvino_model/best.bin"
+    "model_name": "yolov8",
+    "model": "best.onnx",
+    "weights": "best.bin"
   },
   "engine": {
     "type": "simplified",
-    "data_source": "calib_data/"
+    "data_source": "calibration_data"
   },
   "compression": {
     "algorithms": [
       {
         "name": "DefaultQuantization",
         "params": {
+          "target_device": "CPU",
           "preset": "performance",
-          "stat_subset_size": 63
+          "stat_subset_size": 300
         }
       }
     ]
