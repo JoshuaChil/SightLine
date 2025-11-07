@@ -17,6 +17,9 @@ deploy SightLine’s AI pipeline on Intel’s DevCloud once refined, to allow on
 through a web interface, advancing the model to a user-ready state for the visually impaired
 worldwide.
 
+## Advanced Object Detection
+- Currently, training novel object detectors (e.g. YOLOv11, RFDETR) on high-volume datasets, to enhance object detection accuracy and improve computational efficiency. Seeking to increase model's precision for identifying key navigational obstructions such as doorways, staircases, etc.
+
 ## Intel Hardware Technologies
 - YOLOv8 model compute power offloaded onto Intel x86 CPU chip (Intel Core i7) for
 processing on primary edge device during pipeline construction and evaluation,
