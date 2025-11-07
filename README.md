@@ -22,14 +22,8 @@ worldwide.
 processing on primary edge device during pipeline construction and evaluation,
 demonstrating faster computation times than competitive GPUs, while reducing load on
 system.
-- Our AI pipeline is packaged in a Kubernetes cluster, prepared for migration to Intel
-Developer Cloud (Tiber AI Cloud), to leverage Habana Gaudi accelerator series for vaster
-YOLOv8 training, expanding detectable objects. The Gaudi series has demonstrated lower
-environmental cost compared to other competitors, reinforcing ethical technology
-principles.
 - Our go to market strategy revolves around deploying our tested AI pipeline as a web
-interface that is powered by Xeon Scalable processors, due to their accelerated deep
-learning inference capabilities, that are critical for SightLine's instant detection and
+interface, due to their accelerated deep learning inference capabilities, that are critical for SightLine's instant detection and
 conversion of visual data into information for the LLM.
 
 ## Intel Software Technologies
@@ -42,8 +36,6 @@ folder was used as the calibration dataset for Intel Neural Compressor.
 - We experimented with OpenVINO runtime to test converted ONNX format and understand
 differences in capability compared to the raw PyTorch weights file. NNCF (Neural Network
 Compression Framework) was also tested as a quantization approach.
-- OpenVINO Jupyter Notebooks were used as examples, along with documentation, to learn
-quantization implementation.
 - For further research on SightLine, we plan on leveraging the Intel extension for
 transformers, and Optimum for Intel, to compress large language models and attempt local
 mobile device processing of SightLine's AI pipeline. The effects of these Intel toolsets can
@@ -78,11 +70,9 @@ variant's hyperparameters are accordingly optimized to adhere to ethical AI prin
 - During usage, the textual prompt generated from the image data is saved as a string
 variable, allowing it to be accessed intermediately for users to have full transparency on
 what data about their environment is sent to the cloud hosted large language model.
-- Once migrated to Intel Kubernetes on Tiber AI Cloud, the Gaudi accelerators for object
+- If migrated to Intel Kubernetes on Tiber AI Cloud, the Gaudi accelerators for object
 detection training will have a lower environmental cost than competitor GPU's, reducing
 environmental harm during cost intensive model fine tuning.
-- We intend on open-sourcing our approach, and making it testable through a web-interface,
-enabling human oversight and transparency on how the model responds to input data.
 
 ## References:
 - Ackland, Peter, et al. “World Blindness and Visual Impairment: Despite Many Successes, the
