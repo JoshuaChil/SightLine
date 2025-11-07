@@ -11,7 +11,7 @@ import os
 device = torch.device("cuda")
 model, transform = depth_pro.create_model_and_transforms(device=device, precision=torch.float16)
 obj_model = YOLO("yolov8n.pt")
-client = Groq(api_key="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")
+client = Groq(api_key=API_KEY)
 
 class_names1 = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
                'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 
