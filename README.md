@@ -1,6 +1,8 @@
 # SightLine
 Intel Global AI Award 2025. Matches Apple Depth Pro metric depth maps to YOLOv8 object detections to provide spatially aware system prompts powering an AI blind-navigation LLM. Connected to ESP32S3 smart glasses for real-time use via smart glasses.
 
+![Picture of the glasses](/glasses.jpeg)
+
 ## Project Synopsis
 
 Over 43 million people globally were estimated to be completely blind, a condition
@@ -19,7 +21,7 @@ worldwide.
 
 ## System Architecture
 
-<img width="1080" height="529" alt="Screenshot 2025-11-07 at 8 36 30 AM" src="https://github.com/user-attachments/assets/1dbbb500-37d2-44da-b063-d5f73fb1f980" />
+![System Architecture Diagram](/architecture.png)
 
 ## Advanced Object Detection
 - Currently, training novel object detectors (e.g. YOLOv11, RFDETR) on high-volume datasets, to enhance object detection accuracy and improve computational efficiency. Seeking to increase model's precision for identifying key navigational obstructions such as doorways, staircases, etc.
