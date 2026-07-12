@@ -1,7 +1,11 @@
 # SightLine
 Intel Global AI Award 2025. Matches Apple Depth Pro metric depth maps to YOLOv8 object detections to provide spatially aware system prompts powering an AI blind-navigation LLM. Connected to ESP32S3 smart glasses for real-time use via smart glasses.
 
+## Project Submission Video
+
 [![Sightline Submission Video](https://img.youtube.com/vi/PD6jf_h__8Q/0.jpg)](https://www.youtube.com/watch?v=PD6jf_h__8Q)
+
+## Picture of Wearable
 
 ![Picture of the glasses](/glasses.jpeg)
 
